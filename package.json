@@ -1,0 +1,26 @@
+{
+  "name": "viacep-chat",
+  "version": "1.0.0",
+  "description": "Chatbot que consulta códigos de endereçamento postal (CEP).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeanmalves/viaCepChat.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jeanmalves/viaCepChat/issues"
+  },
+  "homepage": "https://github.com/jeanmalves/viaCepChat#readme",
+  "dependencies": {
+    "botbuilder": "^3.14.0",
+    "dotenv-extended": "^2.0.1",
+    "moment": "^2.21.0",
+    "restify": "^6.3.4"
+  }
+}
