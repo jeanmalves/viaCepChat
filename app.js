@@ -1,9 +1,11 @@
 require('dotenv-extended').load()
 
 const builder = require('botbuilder')
+const formflowbotbuilder = require('formflowbotbuilder')
 const restify = require('restify')
 const request = require('request')
 const moment = require('moment')
+const path = require('path')
 
 // bot setup
 const port = process.env.port || process.env.PORT || 3978
@@ -102,10 +104,12 @@ intents.matches('consulta-por-endereco', (session, args, next) => {
   const endereco = builder.EntityRecognizer.findEntity(args.entities, 'endereco');
 
   if (endereco && endereco.entity && !!endereco.entity.length) {
-    session.send(`**(¬‿¬)** - Eu ainda não sei consultar endereços, mas já identifico o nome da rua: **${endereco.entity}**`)
+    session.send(`Ok, para eu poder procurar o endereço **${endereco.entity}** vou precisar de algumas informações...`);
   } else {
-    session.send('**(ಥ﹏ಥ)** - Foi mal, não sei consultar nada, mas quando aprender vou precisar do nome do estado, da cidade e da rua...')
+    session.send(`Ok, para eu poder procurar o endereço que me pediu vou precisar de algumas informações...`);
   }
+
+  session.beginDialog('endereco');
 })
 
 intents.onDefault((session, args) => {
@@ -128,5 +132,58 @@ bot.on('conversationUpdate', (update) => {
       })
   }
 })
+
+
+//FormFlow
+const dialogName = 'form'
+const formData = path.join(__dirname, 'formData.json')
+formflowbotbuilder.executeFormFlow(formData, bot, dialogName, (err, responses) => {
+  if(err)
+      return console.log(err)
+  bot.dialog('endereco', [
+    (session) => {
+      session.beginDialog(dialogName)
+    },
+    (session, results) => {
+        const questao = `Está correto?\n`
+                      + `* Estado: ${responses.uf}\n` 
+                      + `* Cidade: ${responses.cidade}\n`
+                      + `* Rua: ${responses.rua}\n`
+          const options = {
+              listStyle: builder.ListStyle.button,
+              retryPrompt: 'Deculpa, não entendi, selecione uma das opções'
+          }
+          builder.Prompts.confirm(session, questao, options)
+    },
+    (session, results) => {
+          if(results.response){
+              session.send('Aguarde um pouco enquanto eu procuro...');
+
+              const endpoint = `${process.env.NODEJS_CEP_API}/address/${responses.uf}/${responses.cidade}/${responses.rua}`;
+              console.log(endpoint);
+              request(endpoint, (error, response, body) => {
+                  if(error || !body)
+                      return session.send('Ocorreu algum erro, tente novamente mais tarde.')
+                  const endereco = JSON.parse(body);
+                  
+                  session.send('Ai está o endereço que precisa');
+
+                  const message = 'Cep:' + endereco[0].cep + '\n\n' +
+                                  'Rua:' + endereco[0].logradouro + '\n\n' +
+                                  'Bairro:' + endereco[0].bairro + '\n\n' +
+                                  'Cidade:' + endereco[0].localidade + '\n\n' +
+                                  'Estado:' + endereco[0].uf + '\n\n';
+                  session.endDialog(message);
+              })
+
+              return; 
+          }
+          session.userData.reload = true;
+          session.send('Tudo bem, vamos tentar novamente')
+          session.replaceDialog('endereco')
+      }
+  ])
+})
+
 
 bot.dialog('/', intents)
