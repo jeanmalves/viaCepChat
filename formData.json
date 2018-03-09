@@ -1,0 +1,17 @@
+[
+  {
+    "id": "uf",
+    "prompt": "Por favor, informe o nome do estado (uf)",
+    "type": "text"
+  },
+  {
+    "id": "cidade",
+    "prompt": "Por favor, informe o nome da cidade",
+    "type": "text"
+  },
+  {
+    "id": "rua",
+    "prompt": "Por favor, informe o nome da rua",
+    "type": "text"
+  }
+]
