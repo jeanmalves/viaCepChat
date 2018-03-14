@@ -38,6 +38,21 @@ function saudacao() {
   return 'Bom dia'
 }
 
+function createHeroCard(data, session) {
+  var message = '';
+
+  message += 'Cep: ' + data.cep + '\n\n' +
+             'End.: ' + data.logradouro + '\n\n' +
+             'Bairro: ' + data.bairro + '\n\n' +
+             'Cidade: ' + data.localidade + '\n\n' +
+             'Estado: ' + data.uf + '\n\n';
+
+  return new builder.HeroCard(session)
+      .title('Resultados da Busca')
+      .subtitle('Detalhes do endereço pesquisado')
+      .text(message);
+}
+
 //LUIS Dialog
 var luisAppId = process.env.LUIS_API_ID;
 var luisAPIKey = process.env.LUIS_API_KEY;
@@ -83,19 +98,19 @@ formflowbotbuilder.executeFormFlow(formData, bot, dialogName, (err, responses) =
                   if(error || !body)
                       return session.send('Ocorreu algum erro, tente novamente mais tarde.')
                   const endereco = JSON.parse(body);
-                  var message = '';
 
-                  for(var i = 0; i < endereco.length; i++) {
-                    message += 'Cep:' + endereco[i].cep + '\n\n' +
-                    'Rua:' + endereco[i].logradouro + '\n\n' +
-                    'Bairro:' + endereco[i].bairro + '\n\n' +
-                    'Cidade:' + endereco[i].localidade + '\n\n' +
-                    'Estado:' + endereco[i].uf + '\n\n' + 
-                    '---------------------------------------\n\n';
-                  }
-                  if (message != null) {
+                  if (endereco.length > 0) {
                     session.send('Ai está o endereço que precisa');
-                    session.endDialog(message);
+
+                    for(var i = 0; i < endereco.length; i++) {
+                      var card = createHeroCard(endereco[i], session);
+  
+                      var message = new builder.Message(session).addAttachment(card);
+  
+                      session.send(message);
+                    }
+
+                    session.endDialog();
                   } else {
                     session.endDialog('Não consegui encontrar nada com as informações que me passou, você pode tentar de novo quando quiser.');
                   }
@@ -144,15 +159,16 @@ intents.matches('consulta-por-cep', (session, args, next) => {
             return session.send('Ocorreu algum erro, tente novamente mais tarde.')
         const endereco = JSON.parse(body);
 
-        session.send('Ai está o endereço que precisa');
-
-        const message = 'Cep:' + endereco.cep + '\n\n' +
-                        'Rua:' + endereco.logradouro + '\n\n' +
-                        'Bairro:' + endereco.bairro + '\n\n' +
-                        'Cidade:' + endereco.localidade + '\n\n' +
-                        'Estado:' + endereco.uf + '\n\n';
-        
-        session.send(message);
+        if (endereco !== null) {
+          session.send('Ai está o endereço que precisa');
+  
+          var card = createHeroCard(endereco, session);
+          var message = new builder.Message(session).addAttachment(card);
+  
+          session.send(message);
+        } else {
+          session.send('Não consegui encontrar nada com as informações que me passou, você pode tentar de novo quando quiser.');
+        }
     })
   } else {
       session.send('**(ಥ﹏ಥ)** - Foi mal, não encontrei nada parecido, verifique se este CEP existe ou está desatualizado...');
