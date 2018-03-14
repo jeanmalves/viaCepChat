@@ -84,7 +84,7 @@ formflowbotbuilder.executeFormFlow(formData, bot, dialogName, (err, responses) =
                       + `* Rua: ${responses.rua}\n`
           const options = {
               listStyle: builder.ListStyle.button,
-              retryPrompt: 'Deculpa, não entendi, selecione uma das opções'
+              retryPrompt: 'Desculpa, não entendi, selecione uma das opções.'
           }
           builder.Prompts.confirm(session, questao, options)
     },
